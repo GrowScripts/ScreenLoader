@@ -1,33 +1,34 @@
-local function CreateEpicLoader()
+local function CreateFixedWaveLoader()
     -- Ожидаем полную загрузку игры
     while not game:IsLoaded() do task.wait(0.1) end
     
     -- Создаем интерфейс
     local loader = Instance.new("ScreenGui")
-    loader.Name = "EpicLoader_"..tostring(os.time())
+    loader.Name = "FixedWaveLoader_"..tostring(os.time())
     loader.ResetOnSpawn = false
     loader.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     loader.IgnoreGuiInset = true
     loader.DisplayOrder = 99999
     loader.Parent = game:GetService("CoreGui")
     
-    -- Темный фон
-    local bg = Instance.new("Frame")
-    bg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    -- Модальный фон с черным фоном
+    local bg = Instance.new("TextButton")
+    bg.Name = "FullBlocker"
+    bg.Text = ""
+    bg.AutoButtonColor = false
+    bg.Modal = true
+    bg.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    bg.BackgroundTransparency = 0
     bg.Size = UDim2.new(1, 0, 1, 0)
     bg.Parent = loader
     
-    -- Создаем 150 маленьких шариков
+    -- Создаем 500 БЕЛЫХ шариков
     local balls = {}
-    for i = 1, 150 do
-        local size = math.random(3, 10)
+    for i = 1, 500 do
+        local size = math.random(3, 8)
         local ball = Instance.new("Frame")
-        ball.BackgroundColor3 = Color3.fromRGB(
-            math.random(150, 200),
-            math.random(150, 200),
-            255
-        )
-        ball.BackgroundTransparency = 0.8
+        ball.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ball.BackgroundTransparency = 0.8 + math.random() * 0.15
         ball.Size = UDim2.new(0, size, 0, size)
         ball.Position = UDim2.new(math.random(), 0, math.random(), 0)
         ball.BorderSizePixel = 0
@@ -39,51 +40,50 @@ local function CreateEpicLoader()
         ball.Parent = bg
         table.insert(balls, {
             instance = ball,
-            speedX = (math.random() - 0.5) * 0.008,
-            speedY = (math.random() - 0.5) * 0.008,
-            size = size
+            speedX = (math.random() - 0.5) * 0.02,
+            speedY = (math.random() - 0.5) * 0.02,
+            size = size,
+            pulse = math.random() * math.pi * 2
         })
     end
     
     -- Основной контейнер
     local container = Instance.new("Frame")
-    container.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-    container.BackgroundTransparency = 0.3
-    container.Size = UDim2.new(0, 380, 0, 200)
+    container.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    container.BackgroundTransparency = 0.4
+    container.Size = UDim2.new(0, 400, 0, 220)
     container.Position = UDim2.new(0.5, 0, 0.5, 0)
     container.AnchorPoint = Vector2.new(0.5, 0.5)
     
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 12)
+    corner.CornerRadius = UDim.new(0, 14)
     corner.Parent = container
     container.Parent = loader
     
     -- Сообщения с эффектом печати
     local messages = {
-        "Preparing awesome features for you",
-        "Optimizing performance for your device",
+        "Preparing awesome features",
+        "Optimizing performance",
         "Loading essential components",
-        "Final preparations in progress",
-        "Your patience will be rewarded",
+        "Final preparations",
         "Crafting something special",
-        "Good things take time - thanks for waiting",
         "Setting up your experience"
     }
     
     -- Контейнер для текста
     local textContainer = Instance.new("Frame")
     textContainer.BackgroundTransparency = 1
-    textContainer.Size = UDim2.new(1, -40, 0.3, 0)
+    textContainer.Size = UDim2.new(1, -40, 0.25, 0)
     textContainer.Position = UDim2.new(0.5, 0, 0.25, 0)
     textContainer.AnchorPoint = Vector2.new(0.5, 0.5)
     textContainer.Parent = container
     
-    -- Текст загрузки (будем менять)
+    -- Текст загрузки
     local text = Instance.new("TextLabel")
     text.Text = ""
-    text.TextColor3 = Color3.fromRGB(230, 230, 255)
+    text.TextColor3 = Color3.fromRGB(255, 255, 255)
     text.Font = Enum.Font.SourceSansBold
-    text.TextSize = 18
+    text.TextSize = 20
     text.BackgroundTransparency = 1
     text.Size = UDim2.new(1, 0, 1, 0)
     text.TextXAlignment = Enum.TextXAlignment.Center
@@ -92,10 +92,11 @@ local function CreateEpicLoader()
     
     -- Большие проценты
     local percentText = Instance.new("TextLabel")
+    percentText.Name = "PercentText"
     percentText.Text = "0%"
-    percentText.TextColor3 = Color3.fromRGB(180, 220, 255)
+    percentText.TextColor3 = Color3.fromRGB(255, 255, 255)
     percentText.Font = Enum.Font.SourceSansBold
-    percentText.TextSize = 28
+    percentText.TextSize = 36
     percentText.BackgroundTransparency = 1
     percentText.Size = UDim2.new(1, -20, 0.2, 0)
     percentText.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -103,27 +104,51 @@ local function CreateEpicLoader()
     percentText.TextXAlignment = Enum.TextXAlignment.Center
     percentText.Parent = container
     
-    -- Прогресс-бар
+    -- Прогресс-бар с фиксированной волной
+    local progressContainer = Instance.new("Frame")
+    progressContainer.BackgroundTransparency = 1
+    progressContainer.Size = UDim2.new(0.9, 0, 0.15, 0)
+    progressContainer.Position = UDim2.new(0.5, 0, 0.75, 0)
+    progressContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+    progressContainer.Parent = container
+
     local progressBg = Instance.new("Frame")
-    progressBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    progressBg.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
     progressBg.BorderSizePixel = 0
-    progressBg.Size = UDim2.new(0.8, 0, 0.08, 0)
-    progressBg.Position = UDim2.new(0.1, 0, 0.75, 0)
-    progressBg.Parent = container
-    
+    progressBg.Size = UDim2.new(1, 0, 0.4, 0)
+    progressBg.Position = UDim2.new(0, 0, 0.3, 0)
+    progressBg.Parent = progressContainer
+
     local progressCorner = Instance.new("UICorner")
     progressCorner.CornerRadius = UDim.new(1, 0)
     progressCorner.Parent = progressBg
-    
+
     local progressFill = Instance.new("Frame")
-    progressFill.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
+    progressFill.Name = "ProgressFill"
+    progressFill.BackgroundColor3 = Color3.fromRGB(200, 220, 255)
     progressFill.BorderSizePixel = 0
     progressFill.Size = UDim2.new(0, 0, 1, 0)
+    progressFill.ClipsDescendants = true  -- Важно для обрезки волны
     progressFill.Parent = progressBg
-    
+
     local fillCorner = Instance.new("UICorner")
     fillCorner.CornerRadius = UDim.new(1, 0)
     fillCorner.Parent = progressFill
+
+    -- Волна теперь внутри прогресс-бара с правильной привязкой
+    local wave = Instance.new("Frame")
+    wave.Name = "Wave"
+    wave.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    wave.BackgroundTransparency = 0.7
+    wave.BorderSizePixel = 0
+    wave.Size = UDim2.new(0.2, 0, 1.5, 0)
+    wave.AnchorPoint = Vector2.new(0, 0.5)
+    wave.Position = UDim2.new(1, 0, 0.5, 0)  -- Привязана к концу прогресс-бара
+    wave.Parent = progressFill
+
+    local waveCorner = Instance.new("UICorner")
+    waveCorner.CornerRadius = UDim.new(1, 0)
+    waveCorner.Parent = wave
     
     -- Функция печати текста по буквам
     local function typewriterEffect(message)
@@ -134,7 +159,7 @@ local function CreateEpicLoader()
         while currentIndex < #fullMessage do
             currentIndex = currentIndex + 1
             text.Text = string.sub(fullMessage, 1, currentIndex)
-            task.wait(0.03) -- Скорость печати
+            task.wait(0.03)
         end
         
         -- Мигающий курсор в конце
@@ -148,39 +173,78 @@ local function CreateEpicLoader()
     
     -- Анимация
     local startTime = os.clock()
-    local currentMessage = 1
+    local lastProgress = 0
     
-    -- Запускаем анимацию текста в отдельном потоке
+    -- Запускаем анимацию текста
     coroutine.wrap(function()
         while true do
-            typewriterEffect(messages[currentMessage])
+            typewriterEffect(messages[math.random(1, #messages)])
             task.wait(1)
-            currentMessage = (currentMessage % #messages) + 1
         end
     end)()
     
     -- Основной цикл анимации
     game:GetService("RunService").Heartbeat:Connect(function(delta)
-        -- Анимация шариков
+        -- Анимация шариков с пульсацией
         for _, ball in ipairs(balls) do
             local pos = ball.instance.Position
             local newX = (pos.X.Scale + ball.speedX * delta) % 1
             local newY = (pos.Y.Scale + ball.speedY * delta) % 1
+            
+            -- Пульсация
+            ball.pulse = ball.pulse + delta * 2
+            local scale = 0.8 + 0.2 * math.sin(ball.pulse)
+            ball.instance.Size = UDim2.new(0, ball.size * scale, 0, ball.size * scale)
+            
             ball.instance.Position = UDim2.new(newX, 0, newY, 0)
         end
         
-        -- Плавное заполнение прогресс-бара (0-95% за 60 секунд)
+        -- Плавное заполнение прогресс-бара
         local elapsed = os.clock() - startTime
-        local progress = math.min(0.95, elapsed / 60)
-        progressFill.Size = UDim2.new(progress, 0, 1, 0)
-        percentText.Text = math.floor(progress * 100) .. "%"
+        local progress = math.min(0.98, elapsed / 40)
+        
+        -- Плавное изменение размера прогресс-бара
+        progressFill.Size = UDim2.new(
+            lastProgress + (progress - lastProgress) * delta * 10,
+            0,
+            1,
+            0
+        )
+        lastProgress = progressFill.Size.X.Scale
+        
+        -- Анимация процентов
+        local targetPercent = math.floor(progress * 100)
+        local currentPercent = tonumber(percentText.Text:match("%d+")) or 0
+        local newPercent = currentPercent + (targetPercent - currentPercent) * delta * 5
+        
+        if math.abs(newPercent - targetPercent) < 1 then
+            newPercent = targetPercent
+        end
+        
+        percentText.Text = math.floor(newPercent) .. "%"
+        
+        -- Пульсация процентов при изменении
+        if math.floor(newPercent) ~= math.floor(currentPercent) then
+            percentText.TextSize = 36 + 4 * math.sin(os.clock() * 10)
+        else
+            percentText.TextSize = 36
+        end
+        
+        -- Плавное движение волны (только вправо-влево на своем месте)
+        wave.Position = UDim2.new(1, math.sin(os.clock() * 5) * 5, 0.5, 0)
+    end)
+    
+    -- Блокируем ESC меню
+    local uis = game:GetService("UserInputService")
+    uis.WindowFocusReleased:Connect(function()
+        game:GetService("GuiService"):SetMenuIsOpen(false)
     end)
     
     return loader
 end
 
 -- Запускаем с защитой
-local success, err = pcall(CreateEpicLoader)
+local success, err = pcall(CreateFixedWaveLoader)
 if not success then
     warn("Loader Error: "..tostring(err))
 end
