@@ -1,78 +1,72 @@
--- Улучшенный скрипт бесконечной загрузки
 local function CreateLoader()
-    -- Проверяем, доступен ли CoreGui (для исключения ошибок)
+    -- Ждем загрузку игры
     if not game:IsLoaded() then
         game.Loaded:Wait()
     end
 
-    -- Создаем интерфейс
+    -- Создаем полноэкранный блокирующий интерфейс
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "InfiniteLoader"
+    ScreenGui.Name = "FullscreenLoader"
     ScreenGui.ResetOnSpawn = false
     ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ScreenGui.Parent = game:GetService("CoreGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    ScreenGui.IgnoreGuiInset = true
+    ScreenGui.Parent = game:GetService("CoreGui")
 
-    local Frame = Instance.new("Frame")
-    Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    Frame.BorderSizePixel = 0
-    Frame.Position = UDim2.new(0.5, -175, 0.5, -75)
-    Frame.Size = UDim2.new(0, 350, 0, 150)
-    Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-    Frame.Parent = ScreenGui
+    -- Полупрозрачный черный фон на весь экран
+    local Background = Instance.new("Frame")
+    Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Background.BackgroundTransparency = 0.4
+    Background.BorderSizePixel = 0
+    Background.Size = UDim2.new(1, 0, 1, 0)
+    Background.Parent = ScreenGui
+
+    -- Основное окно загрузки
+    local MainFrame = Instance.new("Frame")
+    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -50)
+    MainFrame.Size = UDim2.new(0, 300, 0, 100)
+    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+    MainFrame.Parent = ScreenGui
 
     local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 12)
-    UICorner.Parent = Frame
+    UICorner.CornerRadius = UDim.new(0, 8)
+    UICorner.Parent = MainFrame
 
-    -- Текст с анимацией точек
+    -- Текст загрузки (как в первом изображении)
     local TextLabel = Instance.new("TextLabel")
-    TextLabel.Text = "# Редактирование\n---\nLoading script please be patient"
+    TextLabel.Text = "Loading script please be patient"
     TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TextLabel.Font = Enum.Font.Code
+    TextLabel.Font = Enum.Font.SourceSansBold
     TextLabel.TextSize = 18
+    TextLabel.TextWrapped = true
     TextLabel.BackgroundTransparency = 1
-    TextLabel.Size = UDim2.new(0.9, 0, 0.3, 0)
-    TextLabel.Position = UDim2.new(0.5, 0, 0.2, 0)
-    TextLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-    TextLabel.Parent = Frame
+    TextLabel.Size = UDim2.new(0.9, 0, 0.9, 0)
+    TextLabel.Position = UDim2.new(0.05, 0, 0.05, 0)
+    TextLabel.Parent = MainFrame
 
-    -- Прогресс-бар с плавной анимацией
-    local ProgressBar = Instance.new("Frame")
-    ProgressBar.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    ProgressBar.Size = UDim2.new(0.9, 0, 0.1, 0)
-    ProgressBar.Position = UDim2.new(0.05, 0, 0.6, 0)
-    ProgressBar.Parent = Frame
+    -- Анимация точек
+    local dots = 0
+    local maxDots = 3
+    local connection
 
-    local ProgressBarFill = Instance.new("Frame")
-    ProgressBarFill.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-    ProgressBarFill.Size = UDim2.new(0, 0, 1, 0)
-    ProgressBarFill.Parent = ProgressBar
-
-    -- Функция для плавной анимации
-    local function Animate()
-        local startTime = os.clock()
-        while true do
-            local elapsed = os.clock() - startTime
-            -- Волнообразная анимация (никогда не достигает 100%)
-            local progress = 0.5 + 0.4 * math.sin(elapsed * 0.5)
-            ProgressBarFill.Size = UDim2.new(progress, 0, 1, 0)
-            
-            -- Анимация точек (0...3 точки)
-            local dots = string.rep(".", math.floor(elapsed) % 4)
-            TextLabel.Text = "# Редактирование\n---\nLoading script please be patient" .. dots
-            
-            task.wait(0.1)
-        end
+    local function update()
+        dots = (dots + 1) % (maxDots + 1)
+        TextLabel.Text = "Loading script please be patient" .. string.rep(".", dots)
     end
 
-    -- Запускаем анимацию в отдельном потоке
-    coroutine.wrap(Animate)()
-    
-    return ScreenGui
+    connection = game:GetService("RunService").Heartbeat:Connect(function()
+        update()
+    end)
+
+    -- Функция для удаления (если понадобится)
+    local function RemoveLoader()
+        connection:Disconnect()
+        ScreenGui:Destroy()
+    end
+
+    return RemoveLoader
 end
 
--- Запускаем загрузчик с обработкой ошибок
-local success, message = pcall(CreateLoader)
-if not success then
-    warn("Ошибка при создании загрузчика: " .. tostring(message))
-end
+-- Запускаем загрузчик
+CreateLoader()
