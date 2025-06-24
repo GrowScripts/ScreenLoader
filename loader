@@ -1,94 +1,78 @@
--- Создаем интерфейс загрузки
-local ScreenGui = Instance.new("ScreenGui")
-local Frame = Instance.new("Frame")
-local TextLabel = Instance.new("TextLabel")
-local UICorner = Instance.new("UICorner")
-local ProgressBar = Instance.new("Frame")
-local ProgressBarFill = Instance.new("Frame")
-local UICorner2 = Instance.new("UICorner")
-local TimeLabel = Instance.new("TextLabel")
+-- Улучшенный скрипт бесконечной загрузки
+local function CreateLoader()
+    -- Проверяем, доступен ли CoreGui (для исключения ошибок)
+    if not game:IsLoaded() then
+        game.Loaded:Wait()
+    end
 
-ScreenGui.Parent = game:GetService("CoreGui")
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    -- Создаем интерфейс
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "InfiniteLoader"
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    ScreenGui.Parent = game:GetService("CoreGui") or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 
--- Основной фрейм
-Frame.Parent = ScreenGui
-Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-Frame.BorderSizePixel = 0
-Frame.Position = UDim2.new(0.5, -175, 0.5, -75)
-Frame.Size = UDim2.new(0, 350, 0, 150)
-Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+    local Frame = Instance.new("Frame")
+    Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    Frame.BorderSizePixel = 0
+    Frame.Position = UDim2.new(0.5, -175, 0.5, -75)
+    Frame.Size = UDim2.new(0, 350, 0, 150)
+    Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+    Frame.Parent = ScreenGui
 
-UICorner.Parent = Frame
-UICorner.CornerRadius = UDim.new(0, 12)
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 12)
+    UICorner.Parent = Frame
 
--- Текст
-TextLabel.Parent = Frame
-TextLabel.BackgroundTransparency = 1
-TextLabel.Position = UDim2.new(0.5, 0, 0.2, 0)
-TextLabel.Size = UDim2.new(0.9, 0, 0.3, 0)
-TextLabel.Font = Enum.Font.SourceSansBold
-TextLabel.Text = "# Редактирование\n---\nLoading script please be patient"
-TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-TextLabel.TextScaled = true
-TextLabel.TextWrapped = true
-TextLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+    -- Текст с анимацией точек
+    local TextLabel = Instance.new("TextLabel")
+    TextLabel.Text = "# Редактирование\n---\nLoading script please be patient"
+    TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TextLabel.Font = Enum.Font.Code
+    TextLabel.TextSize = 18
+    TextLabel.BackgroundTransparency = 1
+    TextLabel.Size = UDim2.new(0.9, 0, 0.3, 0)
+    TextLabel.Position = UDim2.new(0.5, 0, 0.2, 0)
+    TextLabel.AnchorPoint = Vector2.new(0.5, 0.5)
+    TextLabel.Parent = Frame
 
--- Прогресс-бар
-ProgressBar.Parent = Frame
-ProgressBar.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-ProgressBar.BorderSizePixel = 0
-ProgressBar.Position = UDim2.new(0.05, 0, 0.6, 0)
-ProgressBar.Size = UDim2.new(0.9, 0, 0.1, 0)
+    -- Прогресс-бар с плавной анимацией
+    local ProgressBar = Instance.new("Frame")
+    ProgressBar.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    ProgressBar.Size = UDim2.new(0.9, 0, 0.1, 0)
+    ProgressBar.Position = UDim2.new(0.05, 0, 0.6, 0)
+    ProgressBar.Parent = Frame
 
-UICorner2.CornerRadius = UDim.new(1, 0)
-UICorner2.Parent = ProgressBar
+    local ProgressBarFill = Instance.new("Frame")
+    ProgressBarFill.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+    ProgressBarFill.Size = UDim2.new(0, 0, 1, 0)
+    ProgressBarFill.Parent = ProgressBar
 
-ProgressBarFill.Parent = ProgressBar
-ProgressBarFill.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
-ProgressBarFill.BorderSizePixel = 0
-ProgressBarFill.Size = UDim2.new(0, 0, 1, 0)
+    -- Функция для плавной анимации
+    local function Animate()
+        local startTime = os.clock()
+        while true do
+            local elapsed = os.clock() - startTime
+            -- Волнообразная анимация (никогда не достигает 100%)
+            local progress = 0.5 + 0.4 * math.sin(elapsed * 0.5)
+            ProgressBarFill.Size = UDim2.new(progress, 0, 1, 0)
+            
+            -- Анимация точек (0...3 точки)
+            local dots = string.rep(".", math.floor(elapsed) % 4)
+            TextLabel.Text = "# Редактирование\n---\nLoading script please be patient" .. dots
+            
+            task.wait(0.1)
+        end
+    end
 
--- Таймер
-TimeLabel.Parent = Frame
-TimeLabel.BackgroundTransparency = 1
-TimeLabel.Position = UDim2.new(0.5, 0, 0.8, 0)
-TimeLabel.Size = UDim2.new(0.9, 0, 0.2, 0)
-TimeLabel.Font = Enum.Font.SourceSans
-TimeLabel.Text = "Время загрузки: 00:00"
-TimeLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-TimeLabel.TextScaled = true
-TimeLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-
--- Анимация бесконечной загрузки
-local startTime = os.time()
-local cycleDuration = 8 -- Длительность одного цикла анимации в секундах
-local maxProgress = 0.95 -- Максимальное значение прогресса (95%)
-
-local function update()
-    -- Обновляем таймер
-    local elapsed = os.time() - startTime
-    local minutes = math.floor(elapsed / 60)
-    local seconds = elapsed % 60
-    TimeLabel.Text = string.format("Время загрузки: %02d:%02d", minutes, seconds)
+    -- Запускаем анимацию в отдельном потоке
+    coroutine.wrap(Animate)()
     
-    -- Плавная анимация прогресс-бара (никогда не достигает 100%)
-    local cycleProgress = (elapsed % cycleDuration) / cycleDuration
-    local progress = maxProgress * (0.3 + 0.7 * (math.sin(cycleProgress * math.pi * 2) * 0.5 + 0.5)
-    ProgressBarFill.Size = UDim2.new(progress, 0, 1, 0)
-    
-    -- Анимация точек в тексте
-    local dots = (math.floor(elapsed) % 4)
-    TextLabel.Text = "# Редактирование\n---\nLoading script please be patient" .. string.rep(".", dots)
+    return ScreenGui
 end
 
--- Запускаем обновление
-game:GetService("RunService").Heartbeat:Connect(update)
-
--- Функция для ручного закрытия (если понадобится)
-local function removeLoadingScreen()
-    ScreenGui:Destroy()
+-- Запускаем загрузчик с обработкой ошибок
+local success, message = pcall(CreateLoader)
+if not success then
+    warn("Ошибка при создании загрузчика: " .. tostring(message))
 end
-
--- Возвращаем функцию для закрытия (но она не будет вызываться автоматически)
-return removeLoadingScreen
