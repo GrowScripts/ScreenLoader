@@ -1,72 +1,186 @@
-local function CreateLoader()
-    -- Ждем загрузку игры
-    if not game:IsLoaded() then
-        game.Loaded:Wait()
+local function CreateEpicLoader()
+    -- Ожидаем полную загрузку игры
+    while not game:IsLoaded() do task.wait(0.1) end
+    
+    -- Создаем интерфейс
+    local loader = Instance.new("ScreenGui")
+    loader.Name = "EpicLoader_"..tostring(os.time())
+    loader.ResetOnSpawn = false
+    loader.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    loader.IgnoreGuiInset = true
+    loader.DisplayOrder = 99999
+    loader.Parent = game:GetService("CoreGui")
+    
+    -- Темный фон
+    local bg = Instance.new("Frame")
+    bg.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+    bg.Size = UDim2.new(1, 0, 1, 0)
+    bg.Parent = loader
+    
+    -- Создаем 150 маленьких шариков
+    local balls = {}
+    for i = 1, 150 do
+        local size = math.random(3, 10)
+        local ball = Instance.new("Frame")
+        ball.BackgroundColor3 = Color3.fromRGB(
+            math.random(150, 200),
+            math.random(150, 200),
+            255
+        )
+        ball.BackgroundTransparency = 0.8
+        ball.Size = UDim2.new(0, size, 0, size)
+        ball.Position = UDim2.new(math.random(), 0, math.random(), 0)
+        ball.BorderSizePixel = 0
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(1, 0)
+        corner.Parent = ball
+        
+        ball.Parent = bg
+        table.insert(balls, {
+            instance = ball,
+            speedX = (math.random() - 0.5) * 0.008,
+            speedY = (math.random() - 0.5) * 0.008,
+            size = size
+        })
     end
-
-    -- Создаем полноэкранный блокирующий интерфейс
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "FullscreenLoader"
-    ScreenGui.ResetOnSpawn = false
-    ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    ScreenGui.IgnoreGuiInset = true
-    ScreenGui.Parent = game:GetService("CoreGui")
-
-    -- Полупрозрачный черный фон на весь экран
-    local Background = Instance.new("Frame")
-    Background.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    Background.BackgroundTransparency = 0.4
-    Background.BorderSizePixel = 0
-    Background.Size = UDim2.new(1, 0, 1, 0)
-    Background.Parent = ScreenGui
-
-    -- Основное окно загрузки
-    local MainFrame = Instance.new("Frame")
-    MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Position = UDim2.new(0.5, -150, 0.5, -50)
-    MainFrame.Size = UDim2.new(0, 300, 0, 100)
-    MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-    MainFrame.Parent = ScreenGui
-
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 8)
-    UICorner.Parent = MainFrame
-
-    -- Текст загрузки (как в первом изображении)
-    local TextLabel = Instance.new("TextLabel")
-    TextLabel.Text = "Loading script please be patient"
-    TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TextLabel.Font = Enum.Font.SourceSansBold
-    TextLabel.TextSize = 18
-    TextLabel.TextWrapped = true
-    TextLabel.BackgroundTransparency = 1
-    TextLabel.Size = UDim2.new(0.9, 0, 0.9, 0)
-    TextLabel.Position = UDim2.new(0.05, 0, 0.05, 0)
-    TextLabel.Parent = MainFrame
-
-    -- Анимация точек
-    local dots = 0
-    local maxDots = 3
-    local connection
-
-    local function update()
-        dots = (dots + 1) % (maxDots + 1)
-        TextLabel.Text = "Loading script please be patient" .. string.rep(".", dots)
+    
+    -- Основной контейнер
+    local container = Instance.new("Frame")
+    container.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    container.BackgroundTransparency = 0.3
+    container.Size = UDim2.new(0, 380, 0, 200)
+    container.Position = UDim2.new(0.5, 0, 0.5, 0)
+    container.AnchorPoint = Vector2.new(0.5, 0.5)
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 12)
+    corner.Parent = container
+    container.Parent = loader
+    
+    -- Сообщения с эффектом печати
+    local messages = {
+        "Preparing awesome features for you",
+        "Optimizing performance for your device",
+        "Loading essential components",
+        "Final preparations in progress",
+        "Your patience will be rewarded",
+        "Crafting something special",
+        "Good things take time - thanks for waiting",
+        "Setting up your experience"
+    }
+    
+    -- Контейнер для текста
+    local textContainer = Instance.new("Frame")
+    textContainer.BackgroundTransparency = 1
+    textContainer.Size = UDim2.new(1, -40, 0.3, 0)
+    textContainer.Position = UDim2.new(0.5, 0, 0.25, 0)
+    textContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+    textContainer.Parent = container
+    
+    -- Текст загрузки (будем менять)
+    local text = Instance.new("TextLabel")
+    text.Text = ""
+    text.TextColor3 = Color3.fromRGB(230, 230, 255)
+    text.Font = Enum.Font.SourceSansBold
+    text.TextSize = 18
+    text.BackgroundTransparency = 1
+    text.Size = UDim2.new(1, 0, 1, 0)
+    text.TextXAlignment = Enum.TextXAlignment.Center
+    text.TextWrapped = true
+    text.Parent = textContainer
+    
+    -- Большие проценты
+    local percentText = Instance.new("TextLabel")
+    percentText.Text = "0%"
+    percentText.TextColor3 = Color3.fromRGB(180, 220, 255)
+    percentText.Font = Enum.Font.SourceSansBold
+    percentText.TextSize = 28
+    percentText.BackgroundTransparency = 1
+    percentText.Size = UDim2.new(1, -20, 0.2, 0)
+    percentText.Position = UDim2.new(0.5, 0, 0.5, 0)
+    percentText.AnchorPoint = Vector2.new(0.5, 0.5)
+    percentText.TextXAlignment = Enum.TextXAlignment.Center
+    percentText.Parent = container
+    
+    -- Прогресс-бар
+    local progressBg = Instance.new("Frame")
+    progressBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    progressBg.BorderSizePixel = 0
+    progressBg.Size = UDim2.new(0.8, 0, 0.08, 0)
+    progressBg.Position = UDim2.new(0.1, 0, 0.75, 0)
+    progressBg.Parent = container
+    
+    local progressCorner = Instance.new("UICorner")
+    progressCorner.CornerRadius = UDim.new(1, 0)
+    progressCorner.Parent = progressBg
+    
+    local progressFill = Instance.new("Frame")
+    progressFill.BackgroundColor3 = Color3.fromRGB(100, 180, 255)
+    progressFill.BorderSizePixel = 0
+    progressFill.Size = UDim2.new(0, 0, 1, 0)
+    progressFill.Parent = progressBg
+    
+    local fillCorner = Instance.new("UICorner")
+    fillCorner.CornerRadius = UDim.new(1, 0)
+    fillCorner.Parent = progressFill
+    
+    -- Функция печати текста по буквам
+    local function typewriterEffect(message)
+        text.Text = ""
+        local currentIndex = 0
+        local fullMessage = message
+        
+        while currentIndex < #fullMessage do
+            currentIndex = currentIndex + 1
+            text.Text = string.sub(fullMessage, 1, currentIndex)
+            task.wait(0.03) -- Скорость печати
+        end
+        
+        -- Мигающий курсор в конце
+        for i = 1, 3 do
+            text.Text = fullMessage .. "|"
+            task.wait(0.3)
+            text.Text = fullMessage
+            task.wait(0.3)
+        end
     end
-
-    connection = game:GetService("RunService").Heartbeat:Connect(function()
-        update()
+    
+    -- Анимация
+    local startTime = os.clock()
+    local currentMessage = 1
+    
+    -- Запускаем анимацию текста в отдельном потоке
+    coroutine.wrap(function()
+        while true do
+            typewriterEffect(messages[currentMessage])
+            task.wait(1)
+            currentMessage = (currentMessage % #messages) + 1
+        end
+    end)()
+    
+    -- Основной цикл анимации
+    game:GetService("RunService").Heartbeat:Connect(function(delta)
+        -- Анимация шариков
+        for _, ball in ipairs(balls) do
+            local pos = ball.instance.Position
+            local newX = (pos.X.Scale + ball.speedX * delta) % 1
+            local newY = (pos.Y.Scale + ball.speedY * delta) % 1
+            ball.instance.Position = UDim2.new(newX, 0, newY, 0)
+        end
+        
+        -- Плавное заполнение прогресс-бара (0-95% за 60 секунд)
+        local elapsed = os.clock() - startTime
+        local progress = math.min(0.95, elapsed / 60)
+        progressFill.Size = UDim2.new(progress, 0, 1, 0)
+        percentText.Text = math.floor(progress * 100) .. "%"
     end)
-
-    -- Функция для удаления (если понадобится)
-    local function RemoveLoader()
-        connection:Disconnect()
-        ScreenGui:Destroy()
-    end
-
-    return RemoveLoader
+    
+    return loader
 end
 
--- Запускаем загрузчик
-CreateLoader()
+-- Запускаем с защитой
+local success, err = pcall(CreateEpicLoader)
+if not success then
+    warn("Loader Error: "..tostring(err))
+end
